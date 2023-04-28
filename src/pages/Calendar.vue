@@ -1,171 +1,150 @@
-
 <template>
-  <div class="calendar">
-      <h2>
-        <a href="#" v-on:click="onClickPrev(currentMonth)">◀</a>
-        {{currentYear}}년 {{currentMonth}}월
-        <a href="#" v-on:click="onClickNext(currentMonth)">▶</a>
+  <section class="section">
+    <div class="container">
+      <h2 class="subtitle has-text-centered">
+        <button class="button is-small is-primary is-outlined mr-5"
+        @click="calendarData(-1)">&lt;</button>
+        {{ year }}년 {{ month }}월
+        <button class="button is-small is-primary is-outlined ml-5"
+        @click="calendarData(1)">&gt;</button>
       </h2>
-      <table class="table table-hover">
-          <thead>
-            <tr>
-              <td v-for="(weekName, index) in weekNames" v-bind:key="index">
-                {{weekName}}
-              </td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, index) in currentCalendarMatrix" :key="index">
-              <td v-for="(day, index2) in row" :key="index2" style="padding:20px;">
-                <span v-if="isToday(currentYear, currentMonth, day)" class="rounded">
-                  {{day}}
-                </span>
-                <span v-else>
-                  {{day}}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-      </table>    
-  </div>
+      <table class="table has-text-centered is-fullwidth">
+        <thead>
+          <th v-for="day in days" :key="day">{{ day }}</th>
+        </thead>
+        <tbody>
+          <tr v-for="(date, idx) in dates" :key="idx">
+            <td
+              v-for="(day, secondIdx) in date"
+              :key="secondIdx"
+              :class="{ 'has-text-info-dark': idx === 0 && day >= lastMonthStart,
+              'has-text-danger': dates.length - 1 === idx && nextMonthStart > day,
+              'has-text-primary': day === today && month === currentMonth && year === currentYear
+              }"
+            >
+              {{ day }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </template>
 
 <script>
 export default {
-  name: 'Calendar',
-  data () {
+  data() {
     return {
-      weekNames: ["월요일", "화요일", "수요일","목요일", "금요일", "토요일", "일요일"],
-      rootYear: 1904,
-      rootDayOfWeekIndex: 4, // 2000년 1월 1일은 토요일
-      currentYear: new Date().getFullYear(),
-      currentMonth: new Date().getMonth()+1,
-      currentDay: new Date().getDate(),
-      currentMonthStartWeekIndex: null,
-      currentCalendarMatrix: [],
-      endOfDay: null,
-      memoDatas: [],
-    }
+      days: [
+        '일',
+        '월',
+        '화',
+        '수',
+        '목',
+        '금',
+        '토',
+      ],
+      dates: [],
+      currentYear: 0,
+      currentMonth: 0,
+      year: 0,
+      month: 0,
+      lastMonthStart: 0,
+      nextMonthStart: 0,
+      today: 0,
+    };
   },
-  mounted(){
-      this.init();
+  created() { // 데이터에 접근이 가능한 첫 번째 라이프 사이클
+    const date = new Date();
+    this.currentYear = date.getFullYear(); // 이하 현재 년, 월 가지고 있기
+    this.currentMonth = date.getMonth() + 1;
+    this.year = this.currentYear;
+    this.month = this.currentMonth;
+    this.today = date.getDate(); // 오늘 날짜
+    this.calendarData();
   },
   methods: {
-      init:function(){
-        this.currentMonthStartWeekIndex = this.getStartWeek(this.currentYear, this.currentMonth);
-        this.endOfDay = this.getEndOfDay(this.currentYear, this.currentMonth);
-        this.initCalendar();
-      },
-      initCalendar:function(){
-        this.currentCalendarMatrix = [];
-        let day=1;
-        for(let i=0; i<6; i++){
-          let calendarRow = [];
-          for(let j=0; j<7; j++){
-            if(i==0 && j<this.currentMonthStartWeekIndex){
-              calendarRow.push("");
-            }
-            else if(day<=this.endOfDay){
-              calendarRow.push(day);
-              day++;
-            }
-            else{
-              calendarRow.push("");
-            }
-          }
-          this.currentCalendarMatrix.push(calendarRow);
-        }
-      },
-      getEndOfDay: function(year, month){
-          switch(month){
-              case 1:
-              case 3:
-              case 5:
-              case 7:
-              case 8:
-              case 10:
-              case 12:
-                return 31;
-                break;
-              case 4:
-              case 6:
-              case 9:
-              case 11:
-                return 30;
-                break;
-              case 2:
-                if( (year%4 == 0) && (year%100 != 0) || (year%400 == 0) ){
-                return 29;   
-                }
-                else{
-                    return 28;
-                }
-                break;
-              default:
-                console.log("unknown month " + month);
-                return 0;
-                break;
-          }
-      },
-      getStartWeek: function(targetYear, targetMonth){
-        let year = this.rootYear;
-        let month = 1;
-        let sumOfDay = this.rootDayOfWeekIndex;
-        while(true){
-          if(targetYear > year){
-            for(let i=0; i<12; i++){
-              sumOfDay += this.getEndOfDay(year, month+i);
-            }
-            year++;
-          }
-          else if(targetYear == year){
-            if(targetMonth > month){
-              sumOfDay += this.getEndOfDay(year, month);
-              month++;
-            }
-            else if(targetMonth == month){
-              return (sumOfDay)%7;
-            }
-          }
-        }
-      },
-      onClickPrev: function(month){
-        month--;
-        if(month<=0){
-          this.currentMonth = 12;
-          this.currentYear -= 1;
-        }
-        else{
-          this.currentMonth -= 1;
-        }
-        this.init();
-      },
-      onClickNext: function(month){
-        month++;
-        if(month>12){
-          this.currentMonth = 1;
-          this.currentYear += 1;
-        }
-        else{
-          this.currentMonth += 1;
-        }
-        this.init();
-      },
-      isToday: function(year, month, day){
-        let date = new Date();
-        return year == date.getFullYear() && month == date.getMonth()+1 && day == date.getDate(); 
+    calendarData(arg) { // 인자를 추가
+      if (arg < 0) { // -1이 들어오면 지난 달 달력으로 이동
+        this.month -= 1;
+      } else if (arg === 1) { // 1이 들어오면 다음 달 달력으로 이동
+        this.month += 1;
       }
-  }
-}
+      if (this.month === 0) { // 작년 12월
+        this.year -= 1;
+        this.month = 12;
+      } else if (this.month > 12) { // 내년 1월
+        this.year += 1;
+        this.month = 1;
+      }
+      const [
+        monthFirstDay,
+        monthLastDate,
+        lastMonthLastDate,
+      ] = this.getFirstDayLastDate(this.year, this.month);
+      this.dates = this.getMonthOfDays(
+        monthFirstDay,
+        monthLastDate,
+        lastMonthLastDate,
+      );
+    },
+    getFirstDayLastDate(year, month) {
+      const firstDay = new Date(year, month - 1, 1).getDay(); // 이번 달 시작 요일
+      const lastDate = new Date(year, month, 0).getDate(); // 이번 달 마지막 날짜
+      let lastYear = year;
+      let lastMonth = month - 1;
+      if (month === 1) {
+        lastMonth = 12;
+        lastYear -= 1;
+      }
+      const prevLastDate = new Date(lastYear, lastMonth, 0).getDate(); // 지난 달 마지막 날짜
+      return [firstDay, lastDate, prevLastDate];
+    },
+    getMonthOfDays(
+      monthFirstDay,
+      monthLastDate,
+      prevMonthLastDate,
+    ) {
+      let day = 1;
+      let prevDay = (prevMonthLastDate - monthFirstDay) + 1;
+      const dates = [];
+      let weekOfDays = [];
+      while (day <= monthLastDate) {
+        if (day === 1) {
+          // 1일이 어느 요일인지에 따라 테이블에 그리기 위한 지난 셀의 날짜들을 구할 필요가 있다.
+          for (let j = 0; j < monthFirstDay; j += 1) {
+            if (j === 0) this.lastMonthStart = prevDay; // 지난 달에서 제일 작은 날짜
+            weekOfDays.push(prevDay);
+            prevDay += 1;
+          }
+        }
+        weekOfDays.push(day);
+        if (weekOfDays.length === 7) {
+          // 일주일 채우면
+          dates.push(weekOfDays);
+          weekOfDays = []; // 초기화
+        }
+        day += 1;
+      }
+      const len = weekOfDays.length;
+      if (len > 0 && len < 7) {
+        for (let k = 1; k <= 7 - len; k += 1) {
+          weekOfDays.push(k);
+        }
+      }
+      if (weekOfDays.length > 0) dates.push(weekOfDays); // 남은 날짜 추가
+      this.nextMonthStart = weekOfDays[0]; // 이번 달 마지막 주에서 제일 작은 날짜
+      return dates;
+    },
+  },
+};
 </script>
+<style>
+td{
+  width: 70px;
+  height: 70px;
+  text-align: center;
+  vertical-align: baseline;
 
-<style type="text/css">
-    .rounded {
-      -moz-border-radius:20px 20px 20px 20px; 
-      border-radius:20px 20px 20px 20px;
-      border:solid 1px #ffffff;
-      background-color:#2b6bd1;
-      padding:10px;
-      color:#ffffff;
-    }
+}
 </style>
