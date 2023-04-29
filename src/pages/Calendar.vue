@@ -17,22 +17,32 @@
             <td
               v-for="(day, secondIdx) in date"
               :key="secondIdx"
-              :class="{ 'has-text-info-dark': idx === 0 && day >= lastMonthStart,
-              'has-text-danger': dates.length - 1 === idx && nextMonthStart > day,
-              'has-text-primary': day === today && month === currentMonth && year === currentYear
-              }"
+              :class="{ 
+                           'has-text-grey-light': idx === 0 && day >= lastMonthStart,
+                           'has-text-grey-lighter':
+                             dates.length - 1 === idx && nextMonthStart > day,
+                           
+                      }"
+              @click="showModal"
             >
               {{ day }}
+              
             </td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
+  <Modal v-bind:modalOpen="modalOpen" v-on:closeModal="closeModal"></Modal>
 </template>
 
 <script>
+import Modal from 'pages/Modal';
+
 export default {
+  components: {
+      Modal,
+    },
   data() {
     return {
       days: [
@@ -52,6 +62,7 @@ export default {
       lastMonthStart: 0,
       nextMonthStart: 0,
       today: 0,
+      modalOpen: false,
     };
   },
   created() { // 데이터에 접근이 가능한 첫 번째 라이프 사이클
@@ -136,13 +147,19 @@ export default {
       this.nextMonthStart = weekOfDays[0]; // 이번 달 마지막 주에서 제일 작은 날짜
       return dates;
     },
+    showModal() {
+        this.modalOpen = true;
+      },
+    closeModal(event) { // event는 $emit의 value
+        this.modalOpen = event;
+      },
   },
 };
 </script>
 <style>
 td{
-  width: 70px;
-  height: 70px;
+  width: 30px;
+  height: 30px;
   text-align: center;
   vertical-align: baseline;
 

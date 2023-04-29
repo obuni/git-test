@@ -3,6 +3,7 @@
 </template>
 
 <script>
+import "bulma/css/bulma.css";
 import { defineComponent } from 'vue'
 
 export default defineComponent({
